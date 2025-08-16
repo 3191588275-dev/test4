@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		<style>
+		  /* 放在你的 <head> 里 */
+		  #response {
+		    margin-top: 30px;
+		    font-size: 20px;
+		    color: #e91e63;
+		    font-weight: bold;
+		  }
+		  button {
+		    padding: 10px 20px;
+		    font-size: 16px;
+		    background-color: #ff69b4;
+		    color: white;
+		    border: none;
+		    border-radius: 5px;
+		    cursor: pointer;
+		  }
+		  input, select {
+		    padding: 8px;
+		    font-size: 16px;
+		    margin: 10px;
+		  }
+		</style>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=100%, initial-scale=1">
+        <title>与俊伟聊天中</title>
+        <link href="css/main.min.css" rel="stylesheet" type="text/css">
+        <link rel="Shortcut Icon" href="favicon.ico"/>
+        <link rel="preload" href="img/love-the-girl.jpg" as="image">
+        <link rel="preload" href="img/news-wuhanfeiyan.jpg" as="image">
+        <link rel="preload" href="img/separate.jpeg" as="image">
+        <link rel="preload" href="img/in-sichuan.jpeg" as="image">
+        <link rel="preload" href="img/lucky-me.jpg" as="image">
+        <link rel="preload" href="img/breakfast.jpg" as="image">
+        <link rel="preload" href="img/exercise-together.jpg" as="image">
+        <link rel="preload" href="img/travel.jpg" as="image">
+        <link rel="preload" href="img/foot.jpg" as="image">
+        <link rel="preload" href="img/marry-me.png" as="image">
+        <link rel="preload" href="img/kiss-my-princess.png" as="image">
+    </head>
+    <body>
+    	<!-- 音乐播放器（默认不显示） -->
+        <audio id="bgm"  autoplay loop >
+        	<source src="music/田馥甄-小幸运_爱给网_aigei_com.mp3" type="audio/mpeg">
+                       您的浏览器不支持音频播放。
+		</audio>
+        <div id="mobile" :class="{ 'has-prompt': hasPrompt }">
+            <div id="mobile-head">
+                <div id="mobile-head-title">与俊伟聊天中</div>
+            </div>
+            <div id="mobile-body">
+                <div id="mobile-body-bg"></div>
+                <div id="mobile-body-content">
+                    <div id="mock-msg-row" class="msg-row">
+                        <div id="mock-msg" class="msg" v-html="latestMsgContent"></div>
+                    </div>
+                    <div class="msg-row"
+                        v-for="(msg, index) in messages"
+                        :key="index"
+                        :class="msg.author === 'author' ? 'msg-author' : 'msg-me'">
+                        <div class="msg"
+                            :class="'msg-bounce-in-' + (msg.author === 'author' ? 'left': 'right')"
+                            :style="msg.width && msg.height && {width: msg.width - 26 + 'px', height: msg.height - 18 + 'px'}"
+                            v-html="msg.content"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="mobile-foot">
+                <div id="prompt">
+                    <div id="prompt-head">
+                        <div class="say-something">我想说……</div>
+                        <a href="javascript:;" class="close-btn"
+                            v-on:click="togglePrompt(false)"></a>
+                    </div>
+                    <div id="prompt-body">
+                        <ul class="responses" v-if="lastDialog">
+                            <li v-for="res in lastDialog.responses">
+                                <a href="javascript:;" v-on:click="respond(res)">{{ res.content }}</a>
+                            </li>
+                        </ul>
+                        <div class="next-topic"
+                            v-if="!lastDialog || !lastDialog.responses">
+                            <ul class="topics">
+                                <li v-for="topic in nextTopics">
+                                    <a href="javascript:;" v-on:click="ask(topic)">{{ topic.brief }}</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div id="input-hint" class="say-something"
+                    v-on:click="togglePrompt(true)"
+                    :class="{'clickable': !isTyping }">
+                    <span v-if="!isTyping">我想说……</span>
+                    <span v-if="isTyping">俊伟正在输入中</span>
+                </div>
+            </div>
+            <div id="prompt-bg" v-on:click="togglePrompt(false)"></div>
+        </div>
+
+        <div class="extra-link" id="meta-link">
+            <a class="letters" href="https://github.com/wongjohn/for-my-love" target="_blank">
+                源码
+            </a>
+        </div>
+
+	   
+        
+        
+        <script src="https://cdn.jsdelivr.net/npm/zepto@1.2.0/dist/zepto.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.2.6/dist/vue.min.js"></script>
+        <script src="js/index-min.js"></script>
+        <!-- ✅ 播放控制脚本放在 body 最底部 -->
+		<script>
+		    // 页面加载时尝试自动播放
+		  window.addEventListener('load', () => {
+		    const audio = document.getElementById('bgm');
+		    audio.play().catch(() => {
+		      console.log("自动播放失败，等待用户点击触发");
+		    });
+		  });
+		
+		    // 用户点击页面任意位置触发播放（移动端兼容）
+		  document.body.addEventListener('click', () => {
+		    const audio = document.getElementById('bgm');
+		    audio.play();
+		  });
+		</script>
+		 <!-- 放在 <body> 的底部或你想展示的位置 -->
+		<div style="margin-top: 50px;">
+		  <h2>你愿意告诉我你的名字吗？</h2>
+		  <input type="text" id="nameInput" placeholder="输入你的名字">
+		
+		  <h2>你对我的喜欢程度是？</h2>
+		  <select id="loveLevel">
+		    <option value="">请选择</option>
+		    <option value="100">超级喜欢 ❤️</option>
+		    <option value="70">有点喜欢 😊</option>
+		    <option value="30">还在考虑 🤔</option>
+		    <option value="0">不太喜欢 😢</option>
+		  </select>
+		
+		  <br><br>
+		  <button onclick="showReply()">提交</button>
+		
+		  <div id="response"></div>
+		</div>
+		<script>
+		  function showReply() {
+		    const name = document.getElementById('nameInput').value.trim();
+		    const level = document.getElementById('loveLevel').value;
+		    const response = document.getElementById('response');
+		
+		    if (!name || !level) {
+		      response.innerText = "请填写名字并选择喜欢程度哦～";
+		      return;
+		    }
+		
+		    let message = `亲爱的 ${name}，`;
+		
+		    if (level == "100") {
+		      message += "我也超级超级喜欢你！我们在一起吧！💖";
+		    } else if (level == "70") {
+		      message += "我感受到你的心动，我们可以慢慢了解彼此～🌸";
+		    } else if (level == "30") {
+		      message += "没关系，我会继续努力让你喜欢我！💪";
+		    } else {
+		      message += "虽然你现在不太喜欢我，但我还是很开心认识你～🌙";
+		    }
+		
+		    response.innerText = message;
+		  }
+		</script>
+    </body>
+</html>
